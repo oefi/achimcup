@@ -1,6 +1,6 @@
 # Achim's Cup — Badminton Mixer Tournament
 
-Single-file HTML app (4589 lines). No build step, no server required. Open `public/app.html` in a browser.
+Single-file HTML app (4589 lines). No build step, no server required. Open `public/index.html` in a browser.
 
 ## What It Does
 
@@ -87,10 +87,7 @@ Categories: Elo (8), Score Gen (8), Matchmaking (7), Simulation (9), Health (5),
 ## File Structure
 
 ```
-public/
-  app.html          ← the entire app
-upload/
-  app.html          ← sync copy
+  index.html
 ```
 
 ## Browser Support
