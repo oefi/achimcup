@@ -1,6 +1,6 @@
 # Achim's Cup — Badminton Mixer Tournament
 
-Single-file HTML app (4589 lines). No build step, no server required. Open `public/index.html` in a browser.
+Single-file HTML app (4592 lines). No build step, no server required. Open `index.html` in a browser.
 
 ## What It Does
 
@@ -71,7 +71,7 @@ Dampening factor 0.65 controls how decisively Elo gaps translate to scores. Resp
 | Win target | 21 | Points per game |
 | Deuce | on | Win by 2, cap 30 |
 | Match win pts | 3 | Tournament points |
-| Close loss bonus | +1 | Within threshold (default 2 pts) |
+| Close loss bonus | +1 | Within threshold (2 pts wizard, 1 pt sim panel) |
 | Mixer variant | Americano | Mexicano also available |
 | Dropout policy | Ghost | Bye redistribution also available |
 
@@ -81,13 +81,13 @@ Dampening factor 0.65 controls how decisively Elo gaps translate to scores. Resp
 
 ## Testing
 
-87 tests embedded in the `Tests` object. Run via browser console: `TestSuite.runAll()`.
-Categories: Elo (8), Score Gen (8), Matchmaking (7), Simulation (9), Health (5), Ranking (8), Matrix (5), Edge Cases (11), Stress (7), Global (5), Regression (8), Statistical (2).
+87 tests embedded in the `TestSuite` object. Run via browser console: `TestSuite.runAll()`.
+Categories: Elo (12), Score Gen (8), Matchmaking (12), Simulation (10), Health (6), Ranking (5), Matrix (5), Edge Cases (10), Stress (4), Global (1), Config (1), Regression (10), Statistical (2), Dropout (1).
 
 ## File Structure
 
 ```
-  index.html
+index.html
 ```
 
 ## Browser Support
