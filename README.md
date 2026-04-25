@@ -81,7 +81,7 @@ Dampening factor 0.65 controls how decisively Elo gaps translate to scores. Resp
 
 ## Testing
 
-87 tests embedded in the `Tests` object. Run via browser console: `Tests.runAll()`.
+87 tests embedded in the `Tests` object. Run via browser console: `TestSuite.runAll()`.
 Categories: Elo (8), Score Gen (8), Matchmaking (7), Simulation (9), Health (5), Ranking (8), Matrix (5), Edge Cases (11), Stress (7), Global (5), Regression (8), Statistical (2).
 
 ## File Structure
