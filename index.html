@@ -3994,7 +3994,10 @@
             cat_edge_null_safety: async function () {
                 const badMatch = { team1: ['x1', 'x2'], team2: ['x3', 'x4'], expectedWinProb1: 0.5 };
                 const state = { config: this._mkConfig(), players: [], rounds: [] };
+                const origWarn = console.warn;
+                console.warn = () => {}; // suppress expected warning
                 SimulationEngine.applyResult(state, badMatch, { s1: 21, s2: 10 });
+                console.warn = origWarn;
             },
 
             // =================================================================
