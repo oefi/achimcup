@@ -1707,7 +1707,7 @@
                     <small class="text-muted">Avg Elo Gap</small>
                     <div style="font-weight:700; color: ${gapColor};">${health.avgGap.toFixed(1)} Elo</div>
                 </div>
-                <div class="card" style="margin-bottom:0; padding:12px;" title="${closeLabel} — % of matches decided by within the close-loss threshold (configured: ${state.config.closeLossWindow || 2} points). ${health.closeMatchPct >= 20 ? 'Good competitive balance.' : (health.closeMatchPct >= 12 ? 'Normal level of close games.' : 'Most matches were one-sided.')}">
+                <div class="card" style="margin-bottom:0; padding:12px;" title="${closeLabel} — % of matches decided by within the close-loss threshold (configured: ${SimState.config.closeLossWindow || 2} points). ${health.closeMatchPct >= 20 ? 'Good competitive balance.' : (health.closeMatchPct >= 12 ? 'Normal level of close games.' : 'Most matches were one-sided.')}">
                     <small class="text-muted">Close Match %</small>
                     <div style="font-weight:700; color: ${closeColor};">${health.closeMatchPct.toFixed(1)}%</div>
                 </div>
@@ -4200,6 +4200,68 @@
                 }
             },
 
+            // STATISTICAL: top-3 initial Elo players should win more often than bottom-3
+            cat_stat_top3_win_more: async function () {
+                let top3Wins = 0, bot3Wins = 0, totalRuns = 80;
+                for (let run = 0; run < totalRuns; run++) {
+                    const state = SimulationEngine.run({ numPlayers: 17, numRounds: 8, numCourts: 4, dropout: 2 });
+                    const sorted = [...state.players].filter(p => !p.isDropped).sort((a, b) => b.tournamentPts - a.tournamentPts || b.pd - a.pd);
+                    // Check if any of top-3 initial Elo are in top-3 standings
+                    const top3InitIds = [...state.players].sort((a, b) => b.strengthInitial - a.strengthInitial).slice(0, 3).map(p => p.id);
+                    const bot3InitIds = [...state.players].sort((a, b) => a.strengthInitial - b.strengthInitial).slice(0, 3).map(p => p.id);
+                    const top3Standings = sorted.slice(0, 3).map(p => p.id);
+                    if (top3InitIds.some(id => top3Standings.includes(id))) top3Wins++;
+                    if (bot3InitIds.some(id => top3Standings.includes(id))) bot3Wins++;
+                }
+                // Top-3 Elo should reach top-3 standings more often than bottom-3 Elo
+                if (top3Wins <= bot3Wins) {
+                    throw new Error(`Top-3 Elo (${top3Wins}/${totalRuns}) did not outperform bottom-3 (${bot3Wins}/${totalRuns})`);
+                }
+            },
+
+            // STATISTICAL: final standings should correlate with initial strength
+            cat_stat_elo_standings_correlation: async function () {
+                // Spearman rank correlation helper
+                function spearman(x, y) {
+                    const n = x.length;
+                    const rank = arr => {
+                        const sorted = arr.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);
+                        const ranks = new Array(n);
+                        for (let i = 0; i < n; i++) ranks[sorted[i][1]] = i + 1;
+                        // Handle ties: average rank
+                        let i = 0;
+                        while (i < n) {
+                            let j = i;
+                            while (j < n - 1 && sorted[j + 1][0] === sorted[j][0]) j++;
+                            if (j > i) {
+                                const avg = (i + 1 + j + 1) / 2;
+                                for (let k = i; k <= j; k++) ranks[sorted[k][1]] = avg;
+                            }
+                            i = j + 1;
+                        }
+                        return ranks;
+                    };
+                    const rx = rank(x), ry = rank(y);
+                    const d2 = rx.reduce((s, v, i) => s + (v - ry[i]) ** 2, 0);
+                    return 1 - (6 * d2) / (n * (n * n - 1));
+                }
+
+                let totalCorr = 0, runs = 40;
+                for (let run = 0; run < runs; run++) {
+                    const state = SimulationEngine.run({ numPlayers: 12, numRounds: 6, numCourts: 3, dropout: 1 });
+                    const active = state.players.filter(p => !p.isDropped);
+                    const sorted = [...active].sort((a, b) => b.tournamentPts - a.tournamentPts || b.pd - a.pd);
+                    const initElos = sorted.map(p => p.strengthInitial);
+                    // Invert standings (rank 1 = best = highest value)
+                    const standings = sorted.map((_, i) => sorted.length - i);
+                    totalCorr += spearman(initElos, standings);
+                }
+                const avgCorr = totalCorr / runs;
+                if (avgCorr < 0.3) {
+                    throw new Error(`Elo-standings correlation too low: ${avgCorr.toFixed(3)} (expected ≥ 0.3)`);
+                }
+            },
+
             // =================================================================
             // TEST RUNNER
             // =================================================================
@@ -4219,6 +4281,7 @@
                     'cat_stress': { label: 'Statistical Stress Tests', icon: '💪' },
                     'cat_global': { label: 'Global State & Config', icon: '🔒' },
                     'cat_reg': { label: 'Regression Tests', icon: '🛡️' },
+                    'cat_stat': { label: 'Statistical Validation', icon: '📈' },
                 };
                 for (const key of Object.keys(this)) {
                     if (key.startsWith('cat_') && typeof this[key] === 'function' && key !== 'getCategories') {
